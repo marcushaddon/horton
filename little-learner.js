@@ -1,3 +1,5 @@
+// /<[^>]>/g seems to strip HTML tags pretty wells so far
+
 function Follower(word) {
   this.word = word;
   this.timesObserved = 1;
@@ -82,8 +84,8 @@ var horton = {
   },
 
   getRandomWord: function() {
-    var choice = Math.floor(Math.random() * this.vocabulary.length);
-    return this.vocabulary[choice];
+    var choice = Math.floor(Math.random() * this.vocabulary.list.length);
+    return this.vocabulary.list[choice];
   },
 
   read: function(text) {
@@ -120,26 +122,45 @@ var horton = {
 
   write: function(wordCount, seed) {
     
+    var seed = this.vocabulary.search(seed) || this.getRandomWord();
+
     // blank page
     var poem = [];
 
     // open to suggestion but not nessecary
-    var firstWord = this.vocabulary.search(seed) || this.getRandomWord();
+    var firstWord = seed;
     poem.push(firstWord);
 
     // write
-    for (var i = 1; i < wordCount; i++) {
-      poem[i] = poem[i - 1].chooseFollower(); // NOT WORKING
+    while (poem.length <= wordCount) {
+      var lastWord = poem[poem.length - 1];
+      var nextWord = lastWord.chooseFollower().word;
+      nextWord = this.vocabulary.search(nextWord);
+      poem.push(nextWord);
     }
 
-    console.log(poem);
+    // translate
+    var output = [];
+    for (object in poem) {
+      output[object] = poem[object].word;
+    }
+
+    // print
+    output = output.join(' ');
+    console.log(output);
+    
   }
 
 
 }
 
 
-
+// function blues() {
+//   var subject = horton.getRandomWord().word;
+//   horton.write(7, subject);
+//   horton.write(7);
+//   horton.write(12, subject);
+// }
 
 
 
