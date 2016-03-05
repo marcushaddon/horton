@@ -1,4 +1,4 @@
-# little-learner-thing
+# what is this?
 \> var text = "This is a crude little predictive text engine that learns word association from text that you feed it, and then can spit out a psuedo-poetic... strings of words. Why did I make this in Javascript, for the browser, with no persistent memory? Because I think it's fun to play with because the text you feed it has such a profound effect on the weird poetry it writes.";
 
 \> horton.read(text);
