@@ -1,5 +1,8 @@
 // /<[^>]>/g seems to strip HTML tags pretty wells so far
 
+// now onStrengthenAssoc is never being called? is vocabWord.recordFollower() returning false or no?
+// ugh I dont think if (exists) is doing what I want it to, have horton read something and then loop through all followers of all words to see if any of them have been observed more than once
+
 function Follower(word) {
   this.word = word;
   this.timesObserved = 1;
@@ -28,17 +31,21 @@ function vocabWord(word) {
   };
 
   this.recordFollower = function(word) {
+    this.timesObserved += 1;
+
     var exists = this.followers.search(word);
 
     if (exists) {
       exists.observe();
-     
+      return false;
      } else {
       this.followers.list.push(new Follower(word));
-      console.log("I learned a new association!");
+      return true;
      }
 
-     this.timesObserved += 1;
+     
+     
+
   };
 
   // 
@@ -56,10 +63,7 @@ function vocabWord(word) {
 
     // evenly distributed random choice from weighted array
     var choice = Math.floor(Math.random() * weightedArray.length);
-    // console.log(weightedArray);
     return weightedArray[choice];
-
-
   };
 }
 
@@ -80,7 +84,9 @@ var horton = {
         }  
       }
       return false;
-    }
+    },
+
+    knownAssocs: 0
   },
 
   getRandomWord: function() {
@@ -92,12 +98,11 @@ var horton = {
     var vocab = this.vocabulary;
     var daria = text.toLowerCase().replace(/[^a-z|\s]/gi, '');
     var textArray = daria.split(' ');
-    console.log(textArray);
     
     // if this is our first word, then go ahead and add it!
     if (vocab.list.length === 0) {
       vocab.addWord(textArray[0]);
-      // need to learn first assoc here
+      this.onLearnWord();
     }
 
     // now lets read each word
@@ -112,10 +117,20 @@ var horton = {
       // if we dont know it, learn it and learn its association!
       if (!wordThatExists) {
         this.vocabulary.addWord(currentWord);
+        this.onLearnWord();
+
         var lastWord = this.vocabulary.list[this.vocabulary.list.length - 1];
+
         lastWord.recordFollower(followingWord);
+        this.onLearnAssoc();
+        
+
       } else if (wordThatExists) {
-        wordThatExists.recordFollower(followingWord);
+        if (wordThatExists.recordFollower(followingWord)) {
+          this.onLearnAssoc();
+        } else {
+          this.onStrengthenAssoc();
+        }
       }
     }
   },
@@ -134,6 +149,7 @@ var horton = {
     // write
     while (poem.length <= wordCount) {
       var lastWord = poem[poem.length - 1];
+      console.log(lastWord);
       var nextWord = lastWord.chooseFollower().word;
       nextWord = this.vocabulary.search(nextWord);
       poem.push(nextWord);
@@ -147,8 +163,21 @@ var horton = {
 
     // print
     output = output.join(' ');
-    console.log(output);
+    return output;
     
+  },
+
+  onLearnWord: function() {
+    console.log('I learned a new word!');
+  },
+
+  onLearnAssoc: function() {
+    this.vocabulary.knownAssocs += 1;
+    console.log('I learned a new association!');
+  },
+
+  onStrengthenAssoc: function() {
+    console.log('I strengthened an association!');
   }
 
 
