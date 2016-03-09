@@ -1,7 +1,5 @@
 // /<[^>]>/g seems to strip HTML tags pretty wells so far
 
-// now onStrengthenAssoc is never being called? is vocabWord.recordFollower() returning false or no?
-// ugh I dont think if (exists) is doing what I want it to, have horton read something and then loop through all followers of all words to see if any of them have been observed more than once
 
 function Follower(word) {
   this.word = word;
@@ -133,6 +131,22 @@ var horton = {
         }
       }
     }
+  },
+
+  predict: function(word) {
+    var knowsWord = this.vocabulary.search(word);
+
+    if (knowsWord) {
+      var suggs = knowsWord.followers.list;
+      suggs.sort(function (a, b) { return a.timesObserved - b.timesObserved; });
+      suggs = suggs.map( function(index) {
+        return index.word;
+      });
+      return suggs;
+    } else {
+      return ['No suggestions.'];
+    }
+
   },
 
   write: function(wordCount, seed) {
