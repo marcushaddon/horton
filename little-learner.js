@@ -1,6 +1,9 @@
 // /<[^>]>/g seems to strip HTML tags pretty wells so far
 
 
+
+
+
 function Follower(word) {
   this.word = word;
   this.timesObserved = 1;
@@ -16,8 +19,8 @@ function vocabWord(word) {
   this.followers = {
     list: [],
     search: function(word) {
-      //if word is in my followers, return the Follower for that word
       
+      //if word is in my followers, return the Follower for that word
       for (index in this.list) {
         var currentEntry = this.list[index];
         if (currentEntry.word === word) {
@@ -77,11 +80,12 @@ var horton = {
       // this is WAY not DRY, will refactor later
       for (index in this.list) {
         var currentEntry = this.list[index];
-        if (currentEntry.word === word) {
+        if (currentEntry.word.replace('.', '') === word) {
           return currentEntry;
         }  
       }
-      return false;
+      return false; 
+      
     },
 
     knownAssocs: 0
@@ -93,18 +97,25 @@ var horton = {
   },
 
   read: function(text) {
-    var vocab = this.vocabulary;
-    var daria = text.toLowerCase().replace(/[^a-z|\s]/gi, '');
-    var textArray = daria.split(' ');
-    
-    // if this is our first word, then go ahead and add it!
-    if (vocab.list.length === 0) {
-      vocab.addWord(textArray[0]);
-      this.onLearnWord();
+    var sentences = text.toLocaleLowerCase().split(/[?!.:;]/g);
+    for (sentence in sentences) {
+      var current = sentences[sentence];
+      current !== "" ?
+      this.comprehend(sentences[sentence]) : console.log("empty string!") // dont comprehend empty strings (should probably eliminate the empty strings via splitting by regex eventually)
     }
+  },
+
+  comprehend: function(text) {
+    var vocab = this.vocabulary;
+    var daria = text; // text.toLowerCase().replace(/[^a-z|\s]/gi, '');
+    var textArray = daria.trim().split(' ');
+
+    // put a period on the last word so we know it was found at the end of a sentence (when we get there)
+    var finalWord = textArray[textArray.length -1];
+    finalWord += ".";
 
     // now lets read each word
-    for (var i = 0, length = textArray.length; i < length; i++) {
+    for (var i = 0, length = textArray.length - 1; i < length; i++) {
 
       var currentWord = textArray[i];
       var followingWord = textArray[i + 1]; 
@@ -131,6 +142,23 @@ var horton = {
         }
       }
     }
+
+    // now we've read every word but the last of the sentence
+    var knownFinalWord = this.vocabulary.search(finalWord);
+    if (!knownFinalWord) {
+      // we will add this word as a modified vocabWord
+      var newTerminator = new vocabWord(finalWord);
+      newTerminator.chooseFollower = function() { 
+        console.log("This is from a modified chooseFollower function and my executor was " + this.word); // for debugging
+        return horton.getRandomWord(); 
+      };
+      newTerminator.timesObserved = 1; // doing this manually since we aren't using the learnWord function
+      horton.vocabulary.list.push(newTerminator);
+
+    } // else increment the known Terminator... later
+
+    
+
   },
 
   predict: function(word) {
@@ -163,9 +191,16 @@ var horton = {
     // write
     while (poem.length <= wordCount) {
       var lastWord = poem[poem.length - 1];
-      console.log(lastWord);
-      var nextWord = lastWord.chooseFollower().word;
-      nextWord = this.vocabulary.search(nextWord);
+      console.log(lastWord); // for testing
+
+      
+        var nextWord = lastWord.chooseFollower().word.replace('.', ''); // hopefully this will stop terminators spitting out other terminators which cannot be searched
+      
+      
+      
+
+      
+      nextWord = this.vocabulary.search(nextWord); // AHA here's the culprit
       poem.push(nextWord);
     }
 
@@ -198,12 +233,7 @@ var horton = {
 }
 
 
-// function blues() {
-//   var subject = horton.getRandomWord().word;
-//   horton.write(7, subject);
-//   horton.write(7);
-//   horton.write(12, subject);
-// }
+
 
 
 
